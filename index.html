@@ -1,16 +1,806 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TFMC VOC 관리시스템</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>TFMC VOC 통합 분석 시스템</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Pretendard", "Noto Sans KR", Arial, sans-serif;
+    background: #f5f7fb;
+    color: #182238;
+}
+
+/* 전체 구조 */
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* 왼쪽 메뉴 */
+.sidebar {
+    width: 245px;
+    background: #10192d;
+    color: white;
+    padding: 22px 18px;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    overflow-y: auto;
+}
+
+.logo {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.logo-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg,#356cf5,#6348ed);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+}
+
+.logo-title {
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.logo-sub {
+    font-size: 11px;
+    color: #72a8ff;
+    margin-top: 3px;
+}
+
+.menu-section {
+    font-size: 11px;
+    color: #8894aa;
+    margin: 20px 10px 8px;
+}
+
+.menu-item {
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin: 4px 0;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    transition: .2s;
+}
+
+.menu-item:hover {
+    background: #1c2944;
+}
+
+.menu-item.active {
+    background: #2f6cf3;
+}
+
+.badge {
+    background: #173f77;
+    color: #7db9ff;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+/* 메인 */
+.main {
+    margin-left: 245px;
+    width: calc(100% - 245px);
+}
+
+.header {
+    background: white;
+    border-bottom: 1px solid #e7ebf2;
+    padding: 22px 32px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 23px;
+    margin-bottom: 6px;
+}
+
+.header p {
+    color: #8993a6;
+    font-size: 13px;
+}
+
+.period {
+    background: #edf4ff;
+    color: #366fec;
+    padding: 8px 13px;
+    border-radius: 18px;
+    font-size: 12px;
+}
+
+.content {
+    padding: 26px 30px;
+}
+
+/* 통계 카드 */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 26px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #e4e8ef;
+    border-radius: 15px;
+    padding: 22px;
+    min-height: 145px;
+}
+
+.stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-title {
+    color: #657083;
+    font-size: 13px;
+}
+
+.stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#edf4ff;
+    font-size: 18px;
+}
+
+.stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    margin-top: 20px;
+}
+
+.unit {
+    font-size: 14px;
+    color:#7e8798;
+    margin-left:4px;
+}
+
+.stat-desc {
+    font-size: 12px;
+    margin-top: 12px;
+    color: #19a66c;
+}
+
+.orange .stat-icon {background:#fff4dc;}
+.red .stat-icon {background:#ffeded;}
+.purple .stat-icon {background:#f4ebff;}
+
+/* 바로가기 */
+.section-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.section-subtitle {
+    font-size: 12px;
+    color: #8a94a6;
+    margin-bottom: 15px;
+}
+
+.quick-grid {
+    display:grid;
+    grid-template-columns: repeat(3,1fr);
+    gap:14px;
+    margin-bottom:26px;
+}
+
+.quick-card {
+    border:1px solid #dce7fb;
+    border-radius:14px;
+    padding:18px;
+    background:#f8fbff;
+    cursor:pointer;
+    transition:.2s;
+}
+
+.quick-card:hover {
+    transform: translateY(-3px);
+    box-shadow:0 8px 24px rgba(45,69,110,.08);
+}
+
+.quick-card.orange {
+    background:#fffaf0;
+    border-color:#f7dfaa;
+}
+
+.quick-card.purple {
+    background:#fbf8ff;
+    border-color:#eadcff;
+}
+
+.quick-icon {
+    width:42px;
+    height:42px;
+    border-radius:11px;
+    background:#3a78f2;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    margin-bottom:15px;
+}
+
+.quick-card.orange .quick-icon {background:#ff9f0a;}
+.quick-card.purple .quick-icon {background:#a64bf4;}
+
+.quick-card h3 {
+    font-size:14px;
+    margin-bottom:7px;
+}
+
+.quick-card p {
+    font-size:12px;
+    line-height:1.55;
+    color:#778295;
+}
+
+/* 그래프 */
+.dashboard-grid {
+    display:grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap:16px;
+}
+
+.panel {
+    background:white;
+    border:1px solid #e4e8ef;
+    border-radius:15px;
+    padding:22px;
+}
+
+.panel-title {
+    font-size:15px;
+    font-weight:800;
+    margin-bottom:5px;
+}
+
+.panel-sub {
+    font-size:12px;
+    color:#9099aa;
+    margin-bottom:22px;
+}
+
+.keyword-tags {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:18px;
+}
+
+.keyword {
+    padding:7px 11px;
+    background:#f0f4fa;
+    border-radius:15px;
+    font-size:11px;
+}
+
+.keyword.active {
+    background:#2f6cf3;
+    color:white;
+}
+
+.chart-box {
+    height:280px;
+}
+
+/* 표 */
+.table-panel {
+    margin-top:16px;
+    background:white;
+    border:1px solid #e4e8ef;
+    border-radius:15px;
+    padding:22px;
+}
+
+table {
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+}
+
+th {
+    text-align:left;
+    padding:12px;
+    background:#f7f8fb;
+    color:#606c7e;
+}
+
+td {
+    padding:13px 12px;
+    border-bottom:1px solid #edf0f4;
+}
+
+.status {
+    padding:4px 9px;
+    border-radius:12px;
+    font-size:11px;
+}
+
+.status.done {
+    background:#e8f8ef;
+    color:#15935b;
+}
+
+.status.progress {
+    background:#fff4d9;
+    color:#cb8500;
+}
+
+/* 모바일 */
+@media(max-width:1000px) {
+
+    .sidebar {
+        width:80px;
+    }
+
+    .logo-title,
+    .logo-sub,
+    .menu-item span:first-child,
+    .menu-section {
+        display:none;
+    }
+
+    .main {
+        margin-left:80px;
+        width:calc(100% - 80px);
+    }
+
+    .stats {
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .dashboard-grid {
+        grid-template-columns:1fr;
+    }
+}
+
+@media(max-width:650px) {
+
+    .stats,
+    .quick-grid {
+        grid-template-columns:1fr;
+    }
+
+    .content {
+        padding:18px;
+    }
+}
+</style>
 </head>
 
 <body>
-  <h1>TFMC VOC 관리시스템</h1>
 
-  <p>태백시시설관리공단 VOC 분석 및 관리 시스템</p>
+<div class="app">
 
-  <button>VOC 분석 시작</button>
+<!-- 좌측메뉴 -->
+<aside class="sidebar">
+
+<div class="logo">
+    <div class="logo-icon">▦</div>
+    <div>
+        <div class="logo-title">태백시시설관리공단</div>
+        <div class="logo-sub">AI VOC 통합분석 시스템</div>
+    </div>
+</div>
+
+<div class="menu-section">[기본]</div>
+
+<div class="menu-item active">
+<span>▦ &nbsp; 홈 대시보드</span>
+</div>
+
+<div class="menu-item">
+<span>☁ &nbsp; 파일 업로드</span>
+<span class="badge">1개</span>
+</div>
+
+<div class="menu-item">
+<span>▤ &nbsp; 통합 VOC 대장</span>
+</div>
+
+<div class="menu-section">[분석]</div>
+
+<div class="menu-item">
+<span>↗ &nbsp; 키워드 트렌드</span>
+</div>
+
+<div class="menu-item">
+<span>↻ &nbsp; 반복 이슈</span>
+<span class="badge">3건</span>
+</div>
+
+<div class="menu-item">
+<span>▥ &nbsp; 시설별 비교</span>
+</div>
+
+<div class="menu-item">
+<span>⌘ &nbsp; 접수경로 분석</span>
+</div>
+
+<div class="menu-item">
+<span>◷ &nbsp; 미완료 처리현황</span>
+<span class="badge">3건</span>
+</div>
+
+<div class="menu-section">[활용]</div>
+
+<div class="menu-item">
+<span>💡 &nbsp; 개선 아이디어</span>
+<span class="badge">4건</span>
+</div>
+
+<div class="menu-item">
+<span>♙ &nbsp; 우수사례 모아보기</span>
+</div>
+
+<div class="menu-item">
+<span>▣ &nbsp; 리포트 내보내기</span>
+</div>
+
+</aside>
+
+
+<!-- 메인 -->
+<main class="main">
+
+<header class="header">
+
+<div class="header-top">
+
+<div>
+<h1>VOC 통합 분석 대시보드</h1>
+<p>시민의 소중한 의견을 분석하여 더 나은 시설 서비스를 만들어갑니다.</p>
+</div>
+
+<div class="period">
+📅 2026년 1~3분기 통합
+</div>
+
+</div>
+</header>
+
+
+<div class="content">
+
+<!-- 통계 -->
+<div class="stats">
+
+<div class="stat-card">
+<div class="stat-top">
+<span class="stat-title">전체 VOC</span>
+<div class="stat-icon">▤</div>
+</div>
+<div class="stat-value">19<span class="unit">건</span></div>
+<div class="stat-desc">↗ 전 분기 대비 +12%</div>
+</div>
+
+<div class="stat-card orange">
+<div class="stat-top">
+<span class="stat-title">반복 이슈</span>
+<div class="stat-icon">↻</div>
+</div>
+<div class="stat-value">3<span class="unit">건</span></div>
+<div class="stat-desc">주요 반복 민원 확인 필요</div>
+</div>
+
+<div class="stat-card red">
+<div class="stat-top">
+<span class="stat-title">미완료 VOC</span>
+<div class="stat-icon">◷</div>
+</div>
+<div class="stat-value">3<span class="unit">건</span></div>
+<div class="stat-desc">처리상황 확인 필요</div>
+</div>
+
+<div class="stat-card purple">
+<div class="stat-top">
+<span class="stat-title">개선 아이디어</span>
+<div class="stat-icon">💡</div>
+</div>
+<div class="stat-value">4<span class="unit">건</span></div>
+<div class="stat-desc">AI 제안 개선과제</div>
+</div>
+
+</div>
+
+
+<!-- 추천 메뉴 -->
+<div class="section-title">추천 메뉴 바로가기</div>
+<div class="section-subtitle">자주 사용하는 기능을 바로 이용해보세요.</div>
+
+<div class="quick-grid">
+
+<div class="quick-card">
+<div class="quick-icon">↗</div>
+<h3>키워드 트렌드</h3>
+<p>주요 키워드의 변화 추이를 확인하고 시민 관심사를 분석합니다.</p>
+</div>
+
+<div class="quick-card orange">
+<div class="quick-icon">↻</div>
+<h3>반복 이슈</h3>
+<p>자주 발생하는 반복 민원을 분석하여 개선이 필요한 사항을 찾아냅니다.</p>
+</div>
+
+<div class="quick-card purple">
+<div class="quick-icon">▥</div>
+<h3>시설별 비교</h3>
+<p>시설 간 VOC 현황을 비교하여 서비스 품질을 분석합니다.</p>
+</div>
+
+</div>
+
+
+<!-- 그래프 -->
+<div class="dashboard-grid">
+
+<div class="panel">
+
+<div class="panel-title">↗ 키워드 트렌드</div>
+<div class="panel-sub">분야별 월별 언급 빈도 추이</div>
+
+<div class="keyword-tags">
+<div class="keyword active">전체</div>
+<div class="keyword">시설 이용</div>
+<div class="keyword">환경·청결</div>
+<div class="keyword">직원 친절</div>
+<div class="keyword">안전</div>
+</div>
+
+<div class="chart-box">
+<canvas id="trendChart"></canvas>
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<div class="panel-title">▥ 시설별 VOC 현황</div>
+<div class="panel-sub">사업장별 접수 건수 비교</div>
+
+<div class="chart-box">
+<canvas id="facilityChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- 최근 VOC -->
+<div class="table-panel">
+
+<div class="panel-title">최근 VOC 현황</div>
+<div class="panel-sub">최근 접수된 주요 시민 의견</div>
+
+<table>
+
+<thead>
+<tr>
+<th>접수일</th>
+<th>시설명</th>
+<th>유형</th>
+<th>주요내용</th>
+<th>처리상태</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td>2026-09-20</td>
+<td>국민체육센터</td>
+<td>시설이용</td>
+<td>시설 이용시간 관련 의견</td>
+<td><span class="status done">처리완료</span></td>
+</tr>
+
+<tr>
+<td>2026-09-16</td>
+<td>국민체육센터</td>
+<td>직원응대</td>
+<td>직원 근무 및 안내 관련 의견</td>
+<td><span class="status progress">처리중</span></td>
+</tr>
+
+<tr>
+<td>2026-09-10</td>
+<td>고원자연휴양림</td>
+<td>환경·청결</td>
+<td>객실 청결 관련 의견</td>
+<td><span class="status done">처리완료</span></td>
+</tr>
+
+<tr>
+<td>2026-09-03</td>
+<td>고원힐링캠핑장</td>
+<td>시설개선</td>
+<td>시설물 개선 요청</td>
+<td><span class="status progress">처리중</span></td>
+</tr>
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+</main>
+</div>
+
+
+<script>
+
+/* 키워드 추이 그래프 */
+const trendCtx = document.getElementById('trendChart');
+
+new Chart(trendCtx, {
+
+type:'line',
+
+data:{
+labels:['1월','2월','3월','4월','5월','6월','7월','8월','9월'],
+
+datasets:[{
+label:'VOC 언급건수',
+data:[3,4,5,4,6,5,7,6,9],
+borderColor:'#2f6cf3',
+backgroundColor:'rgba(47,108,243,0.10)',
+fill:true,
+tension:.35,
+borderWidth:3,
+pointRadius:3
+}]
+},
+
+options:{
+responsive:true,
+maintainAspectRatio:false,
+
+plugins:{
+legend:{
+display:false
+}
+},
+
+scales:{
+y:{
+beginAtZero:true,
+grid:{
+color:'#edf0f5'
+}
+},
+
+x:{
+grid:{
+display:false
+}
+}
+}
+}
+});
+
+
+/* 시설별 현황 */
+const facilityCtx =
+document.getElementById('facilityChart');
+
+new Chart(facilityCtx, {
+
+type:'bar',
+
+data:{
+labels:[
+'국민체육센터',
+'캠핑장',
+'자연휴양림',
+'작은영화관',
+'기타시설'
+],
+
+datasets:[{
+data:[8,5,4,3,2],
+
+backgroundColor:[
+'#3b82f6',
+'#6366f1',
+'#8b5cf6',
+'#a855f7',
+'#c084fc'
+],
+
+borderRadius:6
+}]
+},
+
+options:{
+indexAxis:'y',
+
+responsive:true,
+maintainAspectRatio:false,
+
+plugins:{
+legend:{
+display:false
+}
+},
+
+scales:{
+x:{
+beginAtZero:true,
+grid:{
+color:'#edf0f5'
+}
+},
+
+y:{
+grid:{
+display:false
+}
+}
+}
+}
+});
+
+
+/* 메뉴 클릭 */
+document.querySelectorAll('.menu-item').forEach(item => {
+
+item.addEventListener('click', () => {
+
+document
+.querySelectorAll('.menu-item')
+.forEach(m => m.classList.remove('active'));
+
+item.classList.add('active');
+
+});
+
+});
+
+</script>
+
 </body>
 </html>
